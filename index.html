@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+<script src="ng-websocket.js"></script>
+<style>
+table,th, td  {
+  border: 1px solid grey;
+  border-collapse: collapse;
+  padding: 5px;
+};
+ 
+</style>
+<body ng-app="myApp" >
+
+<div  ng-controller="changeTable">
+
+  Displaying live data from Subscribed table<br><br><hr>
+    <form class="fancy-form"  >
+    <input type="text" ng-model="table" placeholder="Table" required="true">
+    <button type="submit" ng-hide="test" ng-click="subKdb(table)">Subscribe</button>
+    <button type="submit" ng-hide="!test" ng-click="changeSub(table)">chnage Subscription</button>
+    <button type="submit" ng-hide="!test" ng-click="closeSub()">close Subscription</button>
+    </form>
+    
+    <form ng-submit="changeSub()">
+      
+    </form>
+ 
+    <br>
+    <hr>
+    <table ng-hide="data">
+     <thead>
+      <th>Time</th>
+      <th>Sym</th>
+      <th>Size</th>
+      <th>price</th>
+   </thead>
+    <tr ng-repeat="msg in message">
+       <td ng-if="$odd" style="background-color:#f1f1f1">{{msg.time}}</td>
+       <td ng-if="$even" >{{msg.time}}</td>
+       <td ng-if="$odd" style="background-color:#f1f1f1">{{msg.sym}}</td>
+       <td ng-if="$even" >{{msg.sym}}</td>
+        <td ng-if="$odd" style="background-color:#f1f1f1">{{msg.size}}</td>
+       <td ng-if="$even" >{{msg.size}}</td>
+        <td ng-if="$odd" style="background-color:#f1f1f1">{{msg.price}}</td>
+       <td ng-if="$even" >{{msg.price}}</td>
+    </tr>
+    
+    </table>
+    
+    
+</div>
+
+<script>
+var app = angular.module('myApp', ['ngWebsocket']);
+  app.controller('changeTable', function($scope,$websocket,$window) { 
+  $scope.test=false;
+  $scope.data=true;
+  var ws;
+     $scope.subKdb = function(table){
+     $scope.test = true;
+     ws=$websocket.$new('ws://localhost:1000');
+     ws.$on('$open', function () {
+    ws.$emit(table); // it sends the event 'hello' with data 'world'
+  }).$on('$message', function (message) { // it listents for 'incoming event'
+       // message=message.replace("\n","")
+       // console.log(message);
+       var ar = JSON.parse(message);
+         $scope.data=false;    
+ //   console.log('something incoming from the server: ' + message);
+         
+  $scope.$apply(function () {
+            $scope.message = ar;
+          
+        });
+   
+  }).$on('$close',function(){console.log("close");});
+     };
+     
+     $scope.changeSub = function(table){ws.$emit(table);
+     };
+     $scope.closeSub= function(){ws.$close();$scope.test=false;$scope.data=true;$window.location.reload();}
+  });
+</script>
+
+</body>
+</html>
